@@ -1,0 +1,21 @@
+server:
+  port: 8080
+
+security:
+  apiKey: ${API_KEY:dev-key}
+  downstreamKey: ${DOWNSTREAM_KEY:downstream-key}
+
+services:
+  video:
+    baseUrl: ${VIDEO_BASE_URL:http://localhost:8001}
+  highlight:
+    baseUrl: ${HIGHLIGHT_BASE_URL:http://localhost:8002}
+
+youtube:
+  apiKey: ${YOUTUBE_API_KEY:}             # optional, for channelId-based lookup
+
+spring:
+  application:
+    name: creatorvault-api
+  main:
+    banner-mode: off
