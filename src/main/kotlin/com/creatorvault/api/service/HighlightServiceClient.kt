@@ -16,12 +16,13 @@ class HighlightServiceClient(
 ) {
     fun analyze(req: AnalyzeRequest) =
         webClient.post()
-            .uri("$baseUrl/analyze")
+            .uri("$baseUrl/highlights/analyze")
             .contentType(MediaType.APPLICATION_JSON)
             .header("Authorization", "Bearer $downstreamKey")
             .bodyValue(req)
             .retrieve()
             .bodyToMono(HighlightsResponse::class.java)
+            .doOnSubscribe { println("📡 Calling highlight-service for videoId=${req.videoId}") }
 
 
     fun get(videoId: String) =

@@ -1,5 +1,7 @@
 package com.creatorvault.api.controller
 
+import com.creatorvault.api.model.DownloadRequest
+import com.creatorvault.api.model.JobStatusResponse
 import com.creatorvault.api.model.VideoListResponse
 import com.creatorvault.api.service.VideoServiceClient
 import com.creatorvault.api.service.YouTubeService
@@ -13,9 +15,7 @@ class VideoController(
     private val yt: YouTubeService
 ) {
 
-    // NEW: real YouTube fetch.
-    // Pass Google OAuth token in X-Google-Token (preferred),
-    // OR pass ?channelId=UCxxxx and set YOUTUBE_API_KEY env var.
+    // GET /videos?channelId=... or X-Google-Token
     @GetMapping
     fun list(
         @RequestHeader(name = "X-Google-Token", required = false) googleToken: String?,
@@ -25,13 +25,17 @@ class VideoController(
         return ResponseEntity.ok(VideoListResponse(items))
     }
 
-    // (unchanged) start download
-    @PostMapping("/{youtubeId}/download")
-    fun startDownload(@PathVariable youtubeId: String): ResponseEntity<Any> =
-        ResponseEntity.ok(videoSvc.startDownload(com.creatorvault.api.model.DownloadRequest(youtubeId)).block())
+    // ✅ Updated: POST /videos/download  (matches Python service)
+    @PostMapping("/download")
+    fun startDownload(@RequestBody req: DownloadRequest): ResponseEntity<JobStatusResponse> {
+        val response = videoSvc.startDownload(req)
+        return ResponseEntity.ok(response)
+    }
 
-    // (unchanged) status
-    @GetMapping("/{jobId}/status")
-    fun status(@PathVariable jobId: String) =
-        ResponseEntity.ok(videoSvc.getStatus(jobId).block())
+    // ✅ Same structure: GET /videos/status/{jobId}
+    @GetMapping("/status/{jobId}")
+    fun status(@PathVariable jobId: String): ResponseEntity<JobStatusResponse> {
+        val response = videoSvc.getStatus(jobId)
+        return ResponseEntity.ok(response)
+    }
 }
