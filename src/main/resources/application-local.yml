@@ -21,8 +21,8 @@ spring:
     banner-mode: off
 
   datasource:
-    url: jdbc:postgresql://postgres:5432/creatorvault
-    username: postgres
+    url: jdbc:postgresql://localhost:5432/creatorvault
+    username: mdhasanrahman
     password: postgres
 
   jpa:

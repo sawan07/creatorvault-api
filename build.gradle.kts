@@ -6,6 +6,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.5"
     kotlin("jvm") version "1.9.24"
     kotlin("plugin.spring") version "1.9.24"
+    kotlin("plugin.jpa") version "1.9.24" // 👈 add this
 }
 
 
@@ -20,21 +21,24 @@ repositories { mavenCentral() }
 dependencies {
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    
+    implementation("org.jetbrains.kotlin:kotlin-reflect") // Kept only one instance
+
     // Spring Boot
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-
-    // (MVP) simple token-based auth placeholder; swap to Spring Security OAuth later
     implementation("org.springframework.boot:spring-boot-starter-security")
 
-    // JSON
+    // JSON & HTTP client
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
 
-    // HTTP client
-    implementation("org.springframework.boot:spring-boot-starter-webflux") // for WebClient
+    // ✅ Flyway for DB migrations - CRITICAL FIX
+    implementation("org.flywaydb:flyway-core:10.20.1") // <--- UPDATED VERSION
+    implementation("org.flywaydb:flyway-database-postgresql:10.20.1") // <-- ADD THE VERSION HERE!
+    // ✅ PostgreSQL JDBC driver - REMOVED EXPLICIT VERSION
+    runtimeOnly("org.postgresql:postgresql")
 
     // Test dependencies
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
@@ -45,7 +49,6 @@ dependencies {
     testImplementation("io.mockk:mockk:1.13.12")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
 

@@ -18,11 +18,24 @@ data class VideoItem(
 )
 
 data class VideoListResponse(val items: List<VideoItem>)
+
+
 data class DownloadRequest(
     @field:NotBlank
     @field:JsonProperty("youtube_id")
-    val youtubeId: String
+    val youtubeId: String,
+
+    // 🔹 optional metadata for persistence
+    @field:JsonProperty("title")
+    val title: String? = null,
+
+    @field:JsonProperty("source_url")
+    val sourceUrl: String? = null,
+
+    @field:JsonProperty("user_email")
+    val userEmail: String? = null
 )
+
 
 data class JobStatusResponse(
     val jobId: String,

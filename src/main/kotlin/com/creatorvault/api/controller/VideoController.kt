@@ -1,41 +1,32 @@
 package com.creatorvault.api.controller
 
-import com.creatorvault.api.model.DownloadRequest
-import com.creatorvault.api.model.JobStatusResponse
-import com.creatorvault.api.model.VideoListResponse
-import com.creatorvault.api.service.VideoServiceClient
-import com.creatorvault.api.service.YouTubeService
-import org.springframework.http.ResponseEntity
+import com.creatorvault.api.domain.entity.Video
+import com.creatorvault.api.model.VideoRequest
+import com.creatorvault.api.model.VideoResponse
+import com.creatorvault.api.service.VideoService
 import org.springframework.web.bind.annotation.*
+import java.util.*
 
 @RestController
 @RequestMapping("/videos")
 class VideoController(
-    private val videoSvc: VideoServiceClient,
-    private val yt: YouTubeService
+    private val videoService: VideoService
 ) {
 
-    // GET /videos?channelId=... or X-Google-Token
-    @GetMapping
-    fun list(
-        @RequestHeader(name = "X-Google-Token", required = false) googleToken: String?,
-        @RequestParam(name = "channelId", required = false) channelId: String?
-    ): ResponseEntity<VideoListResponse> {
-        val items = yt.listUploads(googleToken = googleToken, channelId = channelId)
-        return ResponseEntity.ok(VideoListResponse(items))
+    @GetMapping("/user/{userId}")
+    fun getUserVideos(@PathVariable userId: UUID): List<Video> =
+        videoService.getVideosByUser(userId)
+
+    @PostMapping
+    fun createVideo(@RequestBody req: VideoRequest): VideoResponse {
+        val video = videoService.createVideo(req.userId, req.sourceUrl, req.title)
+        return VideoResponse(
+            id = video.id!!,
+            title = video.title,
+            sourceUrl = video.sourceUrl,
+            status = video.status,
+            fileUrl = video.fileUrl
+        )
     }
 
-    // ✅ Updated: POST /videos/download  (matches Python service)
-    @PostMapping("/download")
-    fun startDownload(@RequestBody req: DownloadRequest): ResponseEntity<JobStatusResponse> {
-        val response = videoSvc.startDownload(req)
-        return ResponseEntity.ok(response)
-    }
-
-    // ✅ Same structure: GET /videos/status/{jobId}
-    @GetMapping("/status/{jobId}")
-    fun status(@PathVariable jobId: String): ResponseEntity<JobStatusResponse> {
-        val response = videoSvc.getStatus(jobId)
-        return ResponseEntity.ok(response)
-    }
 }

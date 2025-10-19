@@ -1,54 +1,41 @@
 package com.creatorvault.api.config
 
-import jakarta.servlet.FilterChain
-import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.http.HttpServletResponse
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter
-import org.springframework.web.filter.OncePerRequestFilter
+import org.springframework.security.web.context.SecurityContextPersistenceFilter
 
 
 @Configuration
-class SecurityConfig(
-    @Value("\${security.apiKey:dev-key}") private val apiKey: String
-) {
+class SecurityConfig(private val apiKeyFilter: ApiKeyFilter) {
+
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .csrf { it.disable() }
-            .authorizeHttpRequests {
-                it
-                    .requestMatchers("/actuator/**").permitAll()
-                    .requestMatchers("/videos/**").permitAll()
-                    .requestMatchers("/highlights/**").permitAll()
-                    .anyRequest().authenticated()
+
+            // Fix: Enforce stateless session management for API
+            .sessionManagement { session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
 
-            .addFilterBefore(ApiKeyFilter(apiKey), BasicAuthenticationFilter::class.java)
-            .httpBasic { it.disable() }
-            .formLogin { it.disable() }
+            // Fix: Authorization chaining to resolve 'At least one mapping is required'
+            .authorizeHttpRequests { auth ->
+                auth.run {
+                    requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
+                    requestMatchers("/users/**").authenticated()
+                    requestMatchers("/videos/**").authenticated()
+                    requestMatchers("/highlights/**").authenticated()
+                    anyRequest().denyAll()
+                }
+            }
 
-        println("✅ Custom SecurityConfig loaded successfully! (API key = $apiKey)")
+            // Fix: Add filter BEFORE the context persistence filter
+            .addFilterBefore(apiKeyFilter, SecurityContextPersistenceFilter::class.java)
+
         return http.build()
-    }
-}
-
-class ApiKeyFilter(private val apiKey: String) : OncePerRequestFilter() {
-    override fun doFilterInternal(req: HttpServletRequest, res: HttpServletResponse, chain: FilterChain) {
-        val provided = req.getHeader("X-API-Key") ?: req.getHeader("x-api-key")
-        println("🔍 [ApiKeyFilter] ${req.method} ${req.requestURI} — X-API-Key: $provided")
-
-        if (provided == apiKey) {
-            println("✅ [ApiKeyFilter] API key validated")
-            chain.doFilter(req, res)
-        } else {
-            println("❌ [ApiKeyFilter] Unauthorized — key mismatch or missing")
-            res.status = 401
-            res.writer.write("Unauthorized")
-        }
     }
 }
